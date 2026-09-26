@@ -77,7 +77,7 @@ h1[contenteditable]:empty:before{ content:attr(data-placeholder); -webkit-text-f
 .gallery{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px 12px; margin-bottom:44px; }
 .polaroid{
   background:#fff; padding:8px 8px 22px; border-radius:3px; box-shadow:0 6px 14px rgba(46,34,51,0.12);
-  cursor:pointer; position:relative;
+  position:relative;
 }
 .polaroid:nth-child(3n+1){ transform:rotate(-4deg); }
 .polaroid:nth-child(3n+2){ transform:rotate(3deg); }
@@ -93,12 +93,9 @@ h1[contenteditable]:empty:before{ content:attr(data-placeholder); -webkit-text-f
 .polaroid:nth-child(5) .tape{ background:var(--orange); }
 .polaroid:nth-child(6) .tape{ background:var(--pink); }
 .frame-inner{
-  width:100%; aspect-ratio:1/1; background:#f3eef6; display:flex; align-items:center; justify-content:center;
+  width:100%; aspect-ratio:1/1; background:#f3eef6;
   background-size:cover; background-position:center;
 }
-.frame-inner .plus{ font-size:22px; color:#c8bed0; }
-.polaroid.filled .plus{ display:none; }
-input[type=file]{ display:none; }
 
 /* closing */
 .closing{ text-align:center; }
@@ -154,7 +151,11 @@ input[type=file]{ display:none; }
   <p class="hint" id="hint">tap the cake to make a wish</p>
 
   <p class="gallery-label">the fun bunch 🎉</p>
-  <div class="gallery" id="gallery"></div>
+  <div class="gallery">
+    <div class="polaroid"><div class="tape"></div><div class="frame-inner" style="background-image:url('photos/photo1.jpg')"></div></div>
+    <div class="polaroid"><div class="tape"></div><div class="frame-inner" style="background-image:url('photos/photo2.jpg')"></div></div>
+    <div class="polaroid"><div class="tape"></div><div class="frame-inner" style="background-image:url('photos/photo3.jpg')"></div></div>
+  </div>
 
   <div class="closing">
     <p class="message" contenteditable="true" spellcheck="false" data-placeholder="Write your birthday message here…" id="message">Wishing you the happiest of days — click to write your own note!</p>
@@ -162,50 +163,17 @@ input[type=file]{ display:none; }
     <div class="dots"><span></span><span></span><span></span><span></span><span></span></div>
   </div>
 
-  <p class="note">click any text to personalize · tap a photo square to add a picture</p>
+  <p class="note">click any text to personalize</p>
 </div>
 
 <script>
 const KEY = 'birthday-bash-v1';
-const PHOTO_COUNT = 6;
-const gallery = document.getElementById('gallery');
 const textFields = ['name','subtitle','message','from'];
 
-function buildGallery(photos){
-  gallery.innerHTML = '';
-  for(let i=0;i<PHOTO_COUNT;i++){
-    const p = document.createElement('div');
-    p.className = 'polaroid';
-    p.innerHTML = `<div class="tape"></div><div class="frame-inner"><span class="plus">+</span></div><input type="file" accept="image/*">`;
-    const inner = p.querySelector('.frame-inner');
-    const input = p.querySelector('input');
-    if(photos[i]){
-      inner.style.backgroundImage = `url(${photos[i]})`;
-      p.classList.add('filled');
-    }
-    p.addEventListener('click', ()=> input.click());
-    input.addEventListener('change', e=>{
-      const file = e.target.files[0]; if(!file) return;
-      const reader = new FileReader();
-      reader.onload = ()=>{
-        inner.style.backgroundImage = `url(${reader.result})`;
-        p.classList.add('filled');
-        savePhoto(i, reader.result);
-      };
-      reader.readAsDataURL(file);
-    });
-    gallery.appendChild(p);
-  }
-}
-
-const DEFAULT_PHOTOS = ['photos/photo1.jpg','photos/photo2.jpg','photos/photo3.jpg'];
-
-function loadAll(){
+function loadText(){
   let data = {};
   try{ data = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){}
   textFields.forEach(id=>{ if(data[id]) document.getElementById(id).innerText = data[id]; });
-  const photos = (data.photos && data.photos.length) ? data.photos : DEFAULT_PHOTOS;
-  buildGallery(photos);
 }
 function saveText(){
   let data = {};
@@ -213,15 +181,8 @@ function saveText(){
   textFields.forEach(id=>{ data[id] = document.getElementById(id).innerText; });
   try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){}
 }
-function savePhoto(i, dataUrl){
-  let data = {};
-  try{ data = JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){}
-  const photos = data.photos || [];
-  photos[i] = dataUrl; data.photos = photos;
-  try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){}
-}
 textFields.forEach(id=> document.getElementById(id).addEventListener('input', saveText));
-loadAll();
+loadText();
 
 let blown = false;
 document.getElementById('cakeBtn').addEventListener('click', ()=>{
